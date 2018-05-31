@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 """
 使用自定义神经网络拟合y = cos(x) x取值范围[0,3]
 y = tan(x) x取值范围为[-1,+1]
+
 """
 
 """
