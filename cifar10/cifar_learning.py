@@ -44,8 +44,6 @@ def unpickle(file):
 
 def handle_input():
     mydict = unpickle('data_batch_1')
-    mydict['hello'] = 5
-    # print(mydict)
     data = np.array(mydict[b'data']).T
     labels_list = mydict[b'labels']
     labels = np.zeros(data.shape)
