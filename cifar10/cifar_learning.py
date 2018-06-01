@@ -60,11 +60,9 @@ def train(source_x,  source_t, bitch_size, hidden_number, learning_rate, epoch, 
     loss_list = []  # 存放loss的list，在绘制loss曲线图使用
 
     # 初始化W,B
-    W0 = 100 * np.random.random() * (
-    np.random.random((hidden_number, input_num)) - 0.5)  # W0.shape = (hidden_number, input_num)
+    W0 = 5 * (np.random.random((hidden_number, input_num)) - 0.5)  # W0.shape = (hidden_number, input_num)
     B0 = np.zeros((hidden_number, 1))  # B0.shape = (hidden_number, 1)
-    W1 = 100 * np.random.random() * (
-    np.random.random((output_num, hidden_number)) - 0.5)  # W1.shape = (output_num, hidden_number)
+    W1 = 5 * (np.random.random((output_num, hidden_number)) - 0.5)  # W1.shape = (output_num, hidden_number)
     B1 = np.zeros((output_num, 1))  # B1.shape = (output_num, 1)
 
     bitch_num = (int)(np.ceil(sample_num / bitch_size))
@@ -90,7 +88,7 @@ def train(source_x,  source_t, bitch_size, hidden_number, learning_rate, epoch, 
             dB0 = np.dot(dx1, np.ones((real_bitch_size, 1)))  # shape()
 
             loss1 = np.sum(y_matrix) / real_bitch_size
-            loss2 = loss1 + reg_bad * (np.sum(W1 ** 2) / 2 + np.sum(W0 ** 2) / 2)
+            loss2 = loss1 + reg_bad * (np.sum(W1 ** 2) + np.sum(W0 ** 2)) / 2
             if param['min_loss2']:
                 if param['min_loss2'] > loss2:
                     print('find min_loss2 -------------------------> ' + str(loss2))
@@ -111,30 +109,34 @@ def train(source_x,  source_t, bitch_size, hidden_number, learning_rate, epoch, 
             print(i, loss1, loss2)
             if i % 100 == 0:
                 loss_list.append([i, loss1, loss2])
-            W1 -= learning_rate * (dW1 + reg_bad*W1)
+            W1 -= learning_rate * (dW1 + reg_bad * W1)
             B1 -= learning_rate * dB1
-            W0 -= learning_rate * (dW0 + reg_bad*W0)
+            W0 -= learning_rate * (dW0 + reg_bad * W0)
             B0 -= learning_rate * dB0
     return W0, B0, W1, B1, np.array(loss_list)
 
 
-def to_one(a):
-    one_size = a.shape[0]
-    a_mean = np.mean(a, axis=1).reshape((one_size, 1))
-    a_min = np.min(a, axis=1).reshape((one_size, 1))
-    a_max = np.max(a, axis=1).reshape((one_size, 1))
-    a = (a - a_mean) * 2 / (a_max - a_min)
-    return a
+def to_one(x, has_param=False, param_x_mean=None, param_x_max=None):
+    if has_param:
+        x = x - param_x_mean
+        return x / param_x_max
+    else:
+        x_mean = np.mean(x, axis=1, keepdims=True)
+        x = x - x_mean
+        x_max = np.max(x, axis=1, keepdims=True)
+        return x / x_max, x_mean, x_max
 
 data_source = {}
 data_source['x0'], data_source['target'] = handle_input()
-data_source['x0'] = to_one(data_source['x0'])
+data_source['x0'], x_mean, x_max = to_one(data_source['x0'])
+np.save('x_mean.npy', x_mean)
+np.save('x_max.npy', x_max)
 print(data_source['x0'].shape)
 print(data_source['target'].shape)
 param = {
     'h_n': 50,
-    'epo': 20000,
-    'reg': 1e-4,
+    'epo': 300,
+    'reg': 1e-3,
     'bitch_size': 128,
     'learning_rate': 1,
     'best_w1': None,
@@ -149,7 +151,7 @@ print('best loss = ', param['min_loss1'], param['min_loss2'])
 
 np.save('cifar_paramters_result2.npy', param)
 end = time.clock()
-print('Running time: %s Seconds'%(end-start))
+print('Running time: %s Seconds' % (end-start))
 plt.title('min Loss, epoch = '+str(param['epo']))
 plt.xlabel('epoch')
 plt.ylabel('loss')
