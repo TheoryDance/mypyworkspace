@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 data_sample1 = np.load("data_sample1.npy")
 data_sample2 = np.load("data_sample2.npy")
 
+
 def kmeans_calc(k, data):
     """
     将给出的集合data进行集合，聚合最终点个数为K个
@@ -63,17 +64,25 @@ plt.title('moon data show')
 plt.xlabel('x')
 plt.ylabel('y')
 colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
-centers, points = kmeans_calc(7, data_sample1)
-for i in range(centers.__len__()):
+centers1, points = kmeans_calc(7, data_sample1)
+for i in range(len(centers1)):
     points_np = np.array(points[i])
-    plt.plot(points_np[:, 0], points_np[:, 1], colors[i%8])
+    plt.plot(points_np[:, 0], points_np[:, 1], colors[i % 8])
     print(i, points_np.shape)
-    plt.plot(centers[i][0], centers[i][1], 'b*')
+    plt.plot(centers1[i][0], centers1[i][1], 'b*')
 
-centers, points = kmeans_calc(7, data_sample2)
-for i in range(centers.__len__()):
+centers2, points = kmeans_calc(7, data_sample2)
+for i in range(len(centers2)):
     points_np = np.array(points[i])
-    plt.plot(points_np[:, 0], points_np[:, 1], colors[i%8])
+    plt.plot(points_np[:, 0], points_np[:, 1], colors[i % 8])
     print(i, points_np.shape)
-    plt.plot(centers[i][0], centers[i][1], 'b*')
+    plt.plot(centers2[i][0], centers2[i][1], 'b*')
+
+
+centers1 = np.array(centers1)
+centers1 = np.hstack((centers1, np.ones((centers1.shape[0], 1))))
+centers2 = np.array(centers2)
+centers2 = np.hstack((centers2, np.zeros((centers2.shape[0], 1))))
+kmeans_result_data = np.vstack((centers1, centers2))
+np.save('kmeans_result_data.npy', kmeans_result_data)
 plt.show()
