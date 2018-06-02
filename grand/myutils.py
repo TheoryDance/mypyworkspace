@@ -17,8 +17,23 @@ def relu(x, reverse=False):
     return x
 
 
+def gauss(x, y, model=False):
+    if model:  # back
+        return -2 * x * y
+    else:  # forward
+        return np.exp(-x ** 2)
+
+
 def softmax_and_log(target, x=None, s=None, reverse=False):
-    if reverse:
+    """
+    该方法是softmax + log整体，注意输入矩阵的shape都是m * num
+    :param target: shape(m, num)
+    :param x: shape(m, num) 前向传播必填
+    :param s: shape(m, num) 反向传播必填
+    :param reverse: False表示前向传播，True表示反向传播
+    :return: 当前向传播时，返回exp的得分概率与Loss值；当为反向传播时，返回Loss对输入向量X的误差
+    """
+    if reverse:  # go back
         batch_size = target.shape[1]
         return (s - target) / batch_size  # Loss的关于x的一阶偏导就是(s - t) / batch_size
     else:

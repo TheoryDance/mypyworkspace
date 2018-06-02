@@ -40,7 +40,7 @@ def unpickle(file):
 
 
 def handle_input():
-    mydict = unpickle('data_batch_1')
+    mydict = unpickle('data_batch_2')
     mydict['hello'] = 5
     # print(mydict)
     data = np.array(mydict[b'data']).T

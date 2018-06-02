@@ -1,38 +1,9 @@
 import numpy as np
 import time
 import matplotlib.pyplot as plt
+import grand.myutils as my
 
 start = time.clock()
-
-def sigmod(matrix, reverse=False):
-    if reverse:  # go back
-        res = matrix * (1 - matrix)
-        return res
-    else:  # forward
-        res = 1 / (1 + np.exp(-matrix))
-        return res
-
-def softmax_and_log(target_eye_matrix, x_matrix=None, s_matrix=None, reverse=False):
-    """
-    该方法是softmax + log整体，注意输入矩阵的shape都是m * num
-    :param target_eye_matrix: shape(m, num)
-    :param x_matrix: shape(m, num) 前向传播必填
-    :param s_matrix: shape(m, num) 反向传播必填
-    :param reverse: False表示前向传播，True表示反向传播
-    :return: 当前向传播时，返回exp的得分概率与Loss值；当为反向传播时，返回Loss对输入向量X的误差
-    """
-    if reverse:  # go back
-        s_matrix_shape = s_matrix.shape
-        bitch = s_matrix_shape[1]
-        return (s_matrix - target_eye_matrix) / bitch  # 一阶偏导就是(s - targer) / bitch
-    else:  # forward
-        exp_x = np.exp(x_matrix)
-        exp_x_sum = np.sum(exp_x, axis=0, keepdims=True)
-        s_matrix = exp_x / exp_x_sum
-        ee = s_matrix * target_eye_matrix
-        ee[ee < 0.0001] = 1
-        y_matrix = -np.log(ee)
-        return s_matrix, y_matrix
 
 
 def unpickle(file):
@@ -73,17 +44,17 @@ def train(source_x,  source_t, bitch_size, hidden_number, learning_rate, epoch, 
             real_bitch_size = X.shape[1]
             # forward
             x1 = np.dot(W0, X) + B0
-            y1 = sigmod(x1)
+            y1 = my.sigmod(x1)
             x2 = np.dot(W1, y1) + B1
             y2 = x2
-            s_matrix, y_matrix = softmax_and_log(T, x_matrix=y2)
+            s_matrix, y_matrix = my.softmax_and_log(T, x=y2)
 
             # go back
-            dx2 = softmax_and_log(T, s_matrix=s_matrix, reverse=True)  # shape(2, num)
+            dx2 = my.softmax_and_log(T, s=s_matrix, reverse=True)  # shape(2, num)
             dW1 = np.dot(dx2, y1.T)  # shape(2, h_number)
             dy1 = np.dot(W1.T, dx2)  # shape(h_number, num)
             dB1 = np.dot(dx2, np.ones((real_bitch_size, 1)))  # shape(2, 1)
-            dx1 = dy1 * sigmod(y1, reverse=True)  # shape(h_number, num)
+            dx1 = dy1 * my.sigmod(y1, reverse=True)  # shape(h_number, num)
             dW0 = np.dot(dx1, X.T)  # shape()
             dB0 = np.dot(dx1, np.ones((real_bitch_size, 1)))  # shape()
 
@@ -107,7 +78,7 @@ def train(source_x,  source_t, bitch_size, hidden_number, learning_rate, epoch, 
                 param['best_b0'] = B0
             # log loss to loss_list
             print(i, loss1, loss2)
-            if i % 100 == 0:
+            if i % 10 == 0:
                 loss_list.append([i, loss1, loss2])
             W1 -= learning_rate * (dW1 + reg_bad * W1)
             B1 -= learning_rate * dB1
