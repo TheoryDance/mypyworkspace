@@ -17,7 +17,7 @@ def relu(x, reverse=False):
     return x
 
 
-def gauss(x, y, model=False):
+def gauss(x, y=None, model=False):
     if model:  # back
         return -2 * x * y
     else:  # forward
