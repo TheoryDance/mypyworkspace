@@ -6,7 +6,7 @@ import grand.myutils as my
 start = time.clock()
 
 
-def unpickle(file):
+def unpickle(file):  # use cifar extract data
     import pickle
     with open(file, 'rb') as fo:
         dict = pickle.load(fo, encoding='bytes')
