@@ -13,7 +13,7 @@ def relu(x, reverse=False):
         x[x > 0] = 1
         x[x < 0] = 0
     else:
-        x[x<0] = 0
+        x[x < 0] = 0
     return x
 
 
