@@ -4,10 +4,6 @@ data = {
     'huhy': {'age': 24, 'sex': '女'},
     'liuer': {'age': 12, 'sex': '男'}
 }
-err = {
-    'zz': 404,
-    'yy': 502
-}
 
 app = Flask(__name__)  # 创建一个服务，赋值给APP
 @app.route('/get_user', methods=['get'])  # 指定接口访问的路径，支持什么请求方式get，post
@@ -17,6 +13,7 @@ def get_user():  # 讲的是封装成一种静态的接口，无任何参数传�
     username = request.args.get('username')  # 使用request.args.get方式获取拼接的入参数据
     print(username)
     return jsonify(data)  # 把字典转成json串返回
+
 
 """
 这个host：windows就一个网卡，可以不写，而liux有多个网卡，写成0:0:0可以接受任意网卡信息,
