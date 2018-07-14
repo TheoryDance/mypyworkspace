@@ -1,3 +1,6 @@
+import os,sys
+sys.path.append(r'C:\Users\Administrator\git\mypyworkspace')
+
 import numpy as np
 import grand.myutils as my
 import matplotlib.pyplot as plt
