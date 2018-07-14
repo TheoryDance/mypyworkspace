@@ -1,3 +1,6 @@
+import os,sys  # 在eclipse中需要添加这个，才能导入项目中包下的模块，在pycharm中会自动添加，而eclipse不会
+sys.path.append(r'C:\Users\Administrator\git\mypyworkspace')
+
 import numpy as np
 import grand.myutils as my
 import matplotlib.pyplot as plt

@@ -1,41 +1,15 @@
+import os, sys
+sys.path.append(r'C:\Users\Administrator\git\mypyworkspace')
+
 import numpy as np
 import time
 import matplotlib.pyplot as plt
+import grand.myutils as my
 
 start = time.clock()
 
-def sigmod(matrix, reverse=False):
-    if reverse:  # go back
-        res = matrix * (1 - matrix)
-        return res
-    else:  # forward
-        res = 1 / (1 + np.exp(-matrix))
-        return res
 
-def softmax_and_log(target_eye_matrix, x_matrix=None, s_matrix=None, reverse=False):
-    """
-    该方法是softmax + log整体，注意输入矩阵的shape都是m * num
-    :param target_eye_matrix: shape(m, num)
-    :param x_matrix: shape(m, num) 前向传播必填
-    :param s_matrix: shape(m, num) 反向传播必填
-    :param reverse: False表示前向传播，True表示反向传播
-    :return: 当前向传播时，返回exp的得分概率与Loss值；当为反向传播时，返回Loss对输入向量X的误差
-    """
-    if reverse:  # go back
-        s_matrix_shape = s_matrix.shape
-        bitch = s_matrix_shape[1]
-        return (s_matrix - target_eye_matrix) / bitch  # 一阶偏导就是(s - targer) / bitch
-    else:  # forward
-        exp_x = np.exp(x_matrix)
-        exp_x_sum = np.sum(exp_x, axis=0, keepdims=True)
-        s_matrix = exp_x / exp_x_sum
-        ee = s_matrix * target_eye_matrix
-        ee[ee < 0.0001] = 1
-        y_matrix = -np.log(ee)
-        return s_matrix, y_matrix
-
-
-def unpickle(file):
+def unpickle(file):  # use cifar extract data
     import pickle
     with open(file, 'rb') as fo:
         dict = pickle.load(fo, encoding='bytes')
@@ -44,8 +18,6 @@ def unpickle(file):
 
 def handle_input():
     mydict = unpickle('data_batch_1')
-    mydict['hello'] = 5
-    # print(mydict)
     data = np.array(mydict[b'data']).T
     labels_list = mydict[b'labels']
     labels = np.zeros(data.shape)
@@ -62,11 +34,9 @@ def train(source_x,  source_t, bitch_size, hidden_number, learning_rate, epoch, 
     loss_list = []  # 存放loss的list，在绘制loss曲线图使用
 
     # 初始化W,B
-    W0 = 100 * np.random.random() * (
-    np.random.random((hidden_number, input_num)) - 0.5)  # W0.shape = (hidden_number, input_num)
+    W0 = 5 * (np.random.random((hidden_number, input_num)) - 0.5)  # W0.shape = (hidden_number, input_num)
     B0 = np.zeros((hidden_number, 1))  # B0.shape = (hidden_number, 1)
-    W1 = 100 * np.random.random() * (
-    np.random.random((output_num, hidden_number)) - 0.5)  # W1.shape = (output_num, hidden_number)
+    W1 = 5 * (np.random.random((output_num, hidden_number)) - 0.5)  # W1.shape = (output_num, hidden_number)
     B1 = np.zeros((output_num, 1))  # B1.shape = (output_num, 1)
 
     bitch_num = (int)(np.ceil(sample_num / bitch_size))
@@ -77,22 +47,22 @@ def train(source_x,  source_t, bitch_size, hidden_number, learning_rate, epoch, 
             real_bitch_size = X.shape[1]
             # forward
             x1 = np.dot(W0, X) + B0
-            y1 = sigmod(x1)
+            y1 = my.sigmod(x1)
             x2 = np.dot(W1, y1) + B1
             y2 = x2
-            s_matrix, y_matrix = softmax_and_log(T, x_matrix=y2)
+            s_matrix, y_matrix = my.softmax_and_log(T, x=y2)
 
             # go back
-            dx2 = softmax_and_log(T, s_matrix=s_matrix, reverse=True)  # shape(2, num)
+            dx2 = my.softmax_and_log(T, s=s_matrix, reverse=True)  # shape(2, num)
             dW1 = np.dot(dx2, y1.T)  # shape(2, h_number)
             dy1 = np.dot(W1.T, dx2)  # shape(h_number, num)
             dB1 = np.dot(dx2, np.ones((real_bitch_size, 1)))  # shape(2, 1)
-            dx1 = dy1 * sigmod(y1, reverse=True)  # shape(h_number, num)
+            dx1 = dy1 * my.sigmod(y1, reverse=True)  # shape(h_number, num)
             dW0 = np.dot(dx1, X.T)  # shape()
             dB0 = np.dot(dx1, np.ones((real_bitch_size, 1)))  # shape()
 
             loss1 = np.sum(y_matrix) / real_bitch_size
-            loss2 = loss1 + reg_bad * (np.sum(W1 ** 2) / 2 + np.sum(W0 ** 2) / 2)
+            loss2 = loss1 + reg_bad * (np.sum(W1 ** 2) + np.sum(W0 ** 2)) / 2
             if param['min_loss2']:
                 if param['min_loss2'] > loss2:
                     print('find min_loss2 -------------------------> ' + str(loss2))
@@ -111,32 +81,36 @@ def train(source_x,  source_t, bitch_size, hidden_number, learning_rate, epoch, 
                 param['best_b0'] = B0
             # log loss to loss_list
             print(i, loss1, loss2)
-            if i % 100 == 0:
+            if i % 10 == 0:
                 loss_list.append([i, loss1, loss2])
-            W1 -= learning_rate * (dW1 + reg_bad*W1)
+            W1 -= learning_rate * (dW1 + reg_bad * W1)
             B1 -= learning_rate * dB1
-            W0 -= learning_rate * (dW0 + reg_bad*W0)
+            W0 -= learning_rate * (dW0 + reg_bad * W0)
             B0 -= learning_rate * dB0
     return W0, B0, W1, B1, np.array(loss_list)
 
 
-def to_one(a):
-    one_size = a.shape[0]
-    a_mean = np.mean(a, axis=1).reshape((one_size, 1))
-    a_min = np.min(a, axis=1).reshape((one_size, 1))
-    a_max = np.max(a, axis=1).reshape((one_size, 1))
-    a = (a - a_mean) * 2 / (a_max - a_min)
-    return a
+def to_one(x, has_param=False, param_x_mean=None, param_x_max=None):
+    if has_param:
+        x = x - param_x_mean
+        return x / param_x_max
+    else:
+        x_mean = np.mean(x, axis=1, keepdims=True)
+        x = x - x_mean
+        x_max = np.max(x, axis=1, keepdims=True)
+        return x / x_max, x_mean, x_max
 
 data_source = {}
 data_source['x0'], data_source['target'] = handle_input()
-data_source['x0'] = to_one(data_source['x0'])
+data_source['x0'], x_mean, x_max = to_one(data_source['x0'])
+np.save('x_mean.npy', x_mean)
+np.save('x_max.npy', x_max)
 print(data_source['x0'].shape)
 print(data_source['target'].shape)
 param = {
     'h_n': 50,
-    'epo': 20000,
-    'reg': 1e-4,
+    'epo': 300,
+    'reg': 1e-3,
     'bitch_size': 128,
     'learning_rate': 1,
     'best_w1': None,
@@ -151,7 +125,7 @@ print('best loss = ', param['min_loss1'], param['min_loss2'])
 
 np.save('cifar_paramters_result2.npy', param)
 end = time.clock()
-print('Running time: %s Seconds'%(end-start))
+print('Running time: %s Seconds' % (end-start))
 plt.title('min Loss, epoch = '+str(param['epo']))
 plt.xlabel('epoch')
 plt.ylabel('loss')

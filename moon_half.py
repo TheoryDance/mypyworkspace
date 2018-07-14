@@ -100,11 +100,9 @@ def train(source_x,  source_t, bitch_size, hidden_number, learning_rate, epoch, 
             dx2 = softmax_and_log(T, s_matrix=s_matrix, reverse=True)  # shape(2, num)
             dW1 = np.dot(dx2, y1.T)  # shape(2, h_number)
             dy1 = np.dot(W1.T, dx2)  # shape(h_number, num)
-            # dB1 = np.dot(dx2, np.ones((real_bitch_size, 1)))  # shape(2, 1)
             dB1 = np.sum(dx2, axis=1, keepdims=True)
             dx1 = dy1 * sigmod(y1, reverse=True)  # shape(h_number, num)
             dW0 = np.dot(dx1, X.T)  # shape()
-            # dB0 = np.dot(dx1, np.ones((real_bitch_size, 1)))  # shape()
             dB0 = np.sum(dx1, axis=1, keepdims=True)
 
             loss1 = np.sum(y_matrix) / real_bitch_size
@@ -135,7 +133,7 @@ def train(source_x,  source_t, bitch_size, hidden_number, learning_rate, epoch, 
     return W0, B0, W1, B1, np.array(loss_list)
 
 
-def test(x0, w0, b0, w1, b1):
+def mytest(x0, w0, b0, w1, b1):
     # forward
     x1 = np.dot(w0, x0) + b0
     y1 = sigmod(x1)
@@ -173,7 +171,7 @@ x_line, y_line = np.linspace(-14, 23, 600), np.linspace(-8, 13, 500)
 X_test = np.meshgrid(x_line, y_line)
 X_test = np.array(X_test).reshape((2, 600 * 500))
 X_test = to_one(X_test)
-y0 = test(X_test, param['w0'], param['b0'], param['w1'], param['b1'])
+y0 = mytest(X_test, param['w0'], param['b0'], param['w1'], param['b1'])
 up, down = [], []
 for i in range(y0.shape[0]):
     if y0[i] == 0:  # up
@@ -181,8 +179,7 @@ for i in range(y0.shape[0]):
     else:
         down.append(X_test[:, i].tolist())
 
-y0 = test(data_source['x0'], param['best_w0'], param['best_b0'], param['best_w1'], param['best_b1'])
-# y0 = test(data_source['x0'], param['w0'], param['b0'], param['w1'], param['b1'])
+y0 = mytest(data_source['x0'], param['best_w0'], param['best_b0'], param['best_w1'], param['best_b1'])
 up2, down2 = [], []
 for i in range(y0.shape[0]):
     if y0[i] == 0:  # up
