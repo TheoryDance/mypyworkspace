@@ -1,6 +1,3 @@
-import os, sys
-sys.path.append(r'C:\Users\Administrator\git\mypyworkspace')
-
 import numpy as np
 import time
 import matplotlib.pyplot as plt
@@ -17,13 +14,16 @@ def unpickle(file):  # use cifar extract data
 
 
 def handle_input():
-    mydict = unpickle('data_batch_1')
-    data = np.array(mydict[b'data']).T
-    labels_list = mydict[b'labels']
-    labels = np.zeros(data.shape)
-    for i in range(len(labels_list)):
-        item = labels_list[i]
-        labels[item, i] = 1
+    data_dict = unpickle('data_batch_1')
+    data = np.array(data_dict[b'data']).T  # data.shape(col_data, sample_num)
+    output_column_size = 10
+    # input_column_size = data.shape[0]
+    sample_num = data.shape[1]
+    labels_list = data_dict[b'labels']  # labels_list is row list, len(labels_list) = sample
+    labels = np.zeros((output_column_size, sample_num))
+    for i in range(sample_num):
+        item = labels_list[i]  # item is sample_i's label
+        labels[item, i] = 1  # set sample_i's label to eye format
     return data, labels
 
 
