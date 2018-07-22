@@ -51,7 +51,8 @@ def to_one(x, has_param=False, param_x_mean=None, param_x_max=None):
         x = x - param_x_mean
         return x / param_x_max
     else:
-        x_mean = np.mean(x, axis=1, keepdims=True)
-        x = x - x_mean
+        x_mean = np.mean(x, axis=1, keepdims=True)  # 横向求均值
+        x = x - x_mean  # 去中心化
         x_max = np.max(x, axis=1, keepdims=True)
+        # 归一化
         return x / x_max, x_mean, x_max
